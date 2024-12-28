@@ -9,7 +9,7 @@ const AuthGuard = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!session) {
-        navigate("/auth/login");
+        navigate("/");
       }
       setIsLoading(false);
     });
