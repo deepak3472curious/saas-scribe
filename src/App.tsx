@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import Login from "./pages/auth/Login";
 import Landing from "./pages/Landing";
 import NewNote from "./pages/notes/NewNote";
+import Profile from "./pages/Profile";
 import AuthGuard from "./components/AuthGuard";
 
 const queryClient = new QueryClient();
@@ -33,6 +34,14 @@ const App = () => (
             element={
               <AuthGuard>
                 <NewNote />
+              </AuthGuard>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <AuthGuard>
+                <Profile />
               </AuthGuard>
             }
           />
