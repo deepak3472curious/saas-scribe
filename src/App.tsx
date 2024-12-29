@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import Login from "./pages/auth/Login";
 import Landing from "./pages/Landing";
 import NewNote from "./pages/notes/NewNote";
+import ViewNote from "./pages/notes/ViewNote";
 import Profile from "./pages/Profile";
 import AuthGuard from "./components/AuthGuard";
 
@@ -34,6 +35,14 @@ const App = () => (
             element={
               <AuthGuard>
                 <NewNote />
+              </AuthGuard>
+            }
+          />
+          <Route
+            path="/notes/:id"
+            element={
+              <AuthGuard>
+                <ViewNote />
               </AuthGuard>
             }
           />
