@@ -30,10 +30,12 @@ const ViewNote = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: (data) => {
-      setEditedTitle(data.title);
-      setEditedContent(data.content || "");
-    },
+    meta: {
+      onSuccess: (data) => {
+        setEditedTitle(data.title);
+        setEditedContent(data.content || "");
+      }
+    }
   });
 
   const updateNoteMutation = useMutation({
