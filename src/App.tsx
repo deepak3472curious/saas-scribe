@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Index from "./pages/Index";
 import Login from "./pages/auth/Login";
 import Landing from "./pages/Landing";
+import NewNote from "./pages/notes/NewNote";
 import AuthGuard from "./components/AuthGuard";
 
 const queryClient = new QueryClient();
@@ -24,6 +25,14 @@ const App = () => (
             element={
               <AuthGuard>
                 <Index />
+              </AuthGuard>
+            }
+          />
+          <Route
+            path="/notes/new"
+            element={
+              <AuthGuard>
+                <NewNote />
               </AuthGuard>
             }
           />
