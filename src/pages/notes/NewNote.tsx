@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 
 const NewNote = () => {
@@ -12,18 +12,40 @@ const NewNote = () => {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const getUserId = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        navigate('/auth/login');
+        return;
+      }
+      setUserId(user.id);
+    };
+
+    getUserId();
+  }, [navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!userId) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to create notes",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
-      const { error } = await supabase.from("notes").insert([
-        {
-          title,
-          content,
-        },
-      ]);
+      const { error } = await supabase.from("notes").insert({
+        title,
+        content,
+        user_id: userId
+      });
 
       if (error) throw error;
 
@@ -33,6 +55,7 @@ const NewNote = () => {
       });
       navigate("/notes");
     } catch (error) {
+      console.error('Error creating note:', error);
       toast({
         title: "Error",
         description: "Failed to create note",
