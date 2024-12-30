@@ -19,14 +19,38 @@ const MainNav = () => {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setIsAuthenticated(!!session);
+      if (event === 'SIGNED_OUT') {
+        navigate('/');
+      }
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [navigate]);
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    navigate("/");
+    try {
+      // First check if we have a session
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        // If no session, just update UI and redirect
+        setIsAuthenticated(false);
+        navigate('/');
+        return;
+      }
+
+      // Proceed with signOut if we have a session
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('Error signing out:', error);
+        return;
+      }
+
+      // Successfully signed out
+      setIsAuthenticated(false);
+      navigate('/');
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
   };
 
   const handleLogin = () => {
