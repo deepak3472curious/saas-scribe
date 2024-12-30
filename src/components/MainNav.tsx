@@ -28,26 +28,16 @@ const MainNav = () => {
   }, [navigate]);
 
   const handleLogout = async () => {
+    // First update the UI state to prevent any race conditions
+    setIsAuthenticated(false);
+    
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        // If no session exists, just update the UI state
-        setIsAuthenticated(false);
-        navigate('/');
-        return;
-      }
-
-      // Clear the session from browser storage
+      // Attempt to sign out locally without checking session
       await supabase.auth.signOut();
-      
-      // Update UI state and navigate
-      setIsAuthenticated(false);
-      navigate('/');
     } catch (error) {
       console.error('Logout error:', error);
-      // Even if there's an error, we should reset the UI state
-      setIsAuthenticated(false);
+    } finally {
+      // Always navigate home, regardless of the API response
       navigate('/');
     }
   };
