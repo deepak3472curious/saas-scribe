@@ -3,9 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
+import { useToast } from "./ui/use-toast";
 
 const MainNav = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
@@ -19,7 +21,7 @@ const MainNav = () => {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setIsAuthenticated(!!session);
-      if (event === 'SIGNED_OUT') {
+      if (event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED' && !session) {
         navigate('/');
       }
     });
@@ -28,16 +30,27 @@ const MainNav = () => {
   }, [navigate]);
 
   const handleLogout = async () => {
-    // First update the UI state to prevent any race conditions
-    setIsAuthenticated(false);
-    
     try {
-      // Attempt to sign out locally without checking session
-      await supabase.auth.signOut();
+      // First clear the local session state
+      await supabase.auth.signOut({ scope: 'local' });
+      setIsAuthenticated(false);
+      
+      // Then attempt to clear the session on the server
+      try {
+        await supabase.auth.signOut({ scope: 'global' });
+      } catch (error) {
+        // Ignore server-side logout errors as we've already cleared locally
+        console.error('Server logout error:', error);
+      }
     } catch (error) {
       console.error('Logout error:', error);
+      toast({
+        title: "Error",
+        description: "An error occurred during logout",
+        variant: "destructive",
+      });
     } finally {
-      // Always navigate home, regardless of the API response
+      // Always navigate home
       navigate('/');
     }
   };

@@ -10,12 +10,16 @@ const AuthGuard = ({ children }: { children: React.ReactNode }) => {
     // Check current session
     const checkSession = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error || !session) {
+          // Clear any stale session data
+          await supabase.auth.signOut({ scope: 'local' });
           navigate("/");
         }
       } catch (error) {
         console.error("Session check error:", error);
+        // Clear any stale session data
+        await supabase.auth.signOut({ scope: 'local' });
         navigate("/");
       } finally {
         setIsLoading(false);
@@ -26,7 +30,12 @@ const AuthGuard = ({ children }: { children: React.ReactNode }) => {
     checkSession();
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'TOKEN_REFRESHED' && !session) {
+        // If token refresh failed, sign out locally
+        await supabase.auth.signOut({ scope: 'local' });
+        navigate("/");
+      }
       if (event === 'SIGNED_OUT' || !session) {
         navigate("/");
       }
