@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import MainNav from "@/components/MainNav";
+import BottomBar from "@/components/BottomBar";
 import {
   Table,
   TableBody,
@@ -49,11 +50,11 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <MainNav />
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8 mt-16 mb-20">
         <div className="px-4 py-6 sm:px-0">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-semibold text-gray-900">Your Notes</h2>
-            <Button onClick={() => navigate("/notes/new")} className="flex items-center">
+            <Button onClick={() => navigate("/notes/new")} className="flex items-center sm:hidden">
               <Plus className="mr-2 h-4 w-4" />
               New Note
             </Button>
@@ -100,6 +101,7 @@ const Index = () => {
           )}
         </div>
       </main>
+      <BottomBar />
     </div>
   );
 };
