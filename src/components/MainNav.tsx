@@ -29,11 +29,26 @@ const MainNav = () => {
 
   const handleLogout = async () => {
     try {
-      await supabase.auth.signOut({ scope: 'local' });
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        // If no session exists, just update the UI state
+        setIsAuthenticated(false);
+        navigate('/');
+        return;
+      }
+
+      // Clear the session from browser storage
+      await supabase.auth.signOut();
+      
+      // Update UI state and navigate
       setIsAuthenticated(false);
       navigate('/');
     } catch (error) {
       console.error('Logout error:', error);
+      // Even if there's an error, we should reset the UI state
+      setIsAuthenticated(false);
+      navigate('/');
     }
   };
 
