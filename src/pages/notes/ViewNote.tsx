@@ -5,9 +5,10 @@ import MainNav from "@/components/MainNav";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { useState } from "react";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
+import NoteDisplay from "@/components/notes/NoteDisplay";
+import NoteEditForm from "@/components/notes/NoteEditForm";
+import { Note } from "@/types/note";
 
 const ViewNote = () => {
   const { id } = useParams();
@@ -28,12 +29,14 @@ const ViewNote = () => {
         .single();
 
       if (error) throw error;
-      return data;
+      return data as Note;
     },
     meta: {
-      onSuccess: (data) => {
-        setEditedTitle(data.title);
-        setEditedContent(data.content || "");
+      onSettled: (data) => {
+        if (data) {
+          setEditedTitle(data.title);
+          setEditedContent(data.content || "");
+        }
       }
     }
   });
@@ -81,6 +84,18 @@ const ViewNote = () => {
     updateNoteMutation.mutate();
   };
 
+  const handleEdit = () => {
+    setEditedTitle(note?.title || "");
+    setEditedContent(note?.content || "");
+    setIsEditing(true);
+  };
+
+  const handleCancel = () => {
+    setEditedTitle(note?.title || "");
+    setEditedContent(note?.content || "");
+    setIsEditing(false);
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -103,74 +118,26 @@ const ViewNote = () => {
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Notes
             </Button>
-            <Button
-              onClick={() => {
-                if (isEditing) {
-                  // Reset to original values when canceling
-                  setEditedTitle(note?.title || "");
-                  setEditedContent(note?.content || "");
-                } else {
-                  // Set values when entering edit mode
-                  setEditedTitle(note?.title || "");
-                  setEditedContent(note?.content || "");
-                }
-                setIsEditing(!isEditing);
-              }}
-              variant={isEditing ? "outline" : "default"}
-            >
-              {isEditing ? "Cancel" : "Edit Note"}
-            </Button>
           </div>
           <div className="bg-white shadow rounded-lg p-6">
-            {isEditing ? (
-              <div className="space-y-4">
-                <div>
-                  <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
-                    Title
-                  </label>
-                  <Input
-                    id="title"
-                    value={editedTitle}
-                    onChange={(e) => setEditedTitle(e.target.value)}
-                    className="w-full"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="content" className="block text-sm font-medium text-gray-700 mb-1">
-                    Content
-                  </label>
-                  <Textarea
-                    id="content"
-                    value={editedContent}
-                    onChange={(e) => setEditedContent(e.target.value)}
-                    rows={8}
-                    className="w-full"
-                  />
-                </div>
-                <div className="flex justify-end">
-                  <Button
-                    onClick={handleSave}
-                    disabled={updateNoteMutation.isPending}
-                  >
-                    {updateNoteMutation.isPending ? "Saving..." : "Save Changes"}
-                  </Button>
-                </div>
-              </div>
-            ) : note && (
-              <>
-                <h1 className="text-3xl font-bold text-gray-900 mb-4">
-                  {note.title}
-                </h1>
-                <div className="prose max-w-none">
-                  <p className="text-gray-700 whitespace-pre-wrap">{note.content}</p>
-                </div>
-                <div className="mt-6 text-sm text-gray-500">
-                  Last updated:{" "}
-                  {note.updated_at
-                    ? new Date(note.updated_at).toLocaleDateString()
-                    : "N/A"}
-                </div>
-              </>
+            {note && (
+              isEditing ? (
+                <NoteEditForm
+                  note={note}
+                  editedTitle={editedTitle}
+                  editedContent={editedContent}
+                  onTitleChange={setEditedTitle}
+                  onContentChange={setEditedContent}
+                  onSave={handleSave}
+                  onCancel={handleCancel}
+                  isSaving={updateNoteMutation.isPending}
+                />
+              ) : (
+                <NoteDisplay
+                  note={note}
+                  onEdit={handleEdit}
+                />
+              )
             )}
           </div>
         </div>
