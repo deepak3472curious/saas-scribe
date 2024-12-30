@@ -9,18 +9,18 @@ const Landing = () => {
   const benefits = [
     {
       icon: <BookOpen className="w-12 h-12 text-primary mb-4" />,
-      title: "Document Your Journey",
-      description: "Capture your entrepreneurial experiences, decisions, and learnings in one secure place."
+      title: "Brain Dump",
+      description: "Transform your thoughts into organized insights and actionable plans."
     },
     {
       icon: <Users className="w-12 h-12 text-primary mb-4" />,
-      title: "Personal Space",
-      description: "Your private space to reflect on challenges, victories, and growth moments."
+      title: "Personal AI Assistant",
+      description: "Let AI help you organize and make sense of your daily thoughts and ideas."
     },
     {
       icon: <Lock className="w-12 h-12 text-primary mb-4" />,
-      title: "Secure & Private",
-      description: "Your entries are protected and only accessible to you, ensuring complete privacy."
+      title: "Private & Secure",
+      description: "Your thoughts are yours - we keep them private and secure."
     }
   ];
 
@@ -31,17 +31,18 @@ const Landing = () => {
         <div className="text-center mb-16">
           <FileText className="w-16 h-16 text-primary mb-8 mx-auto" />
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            Founder's Diary
+            Clear Your Mind.<br />
+            <span className="text-primary">Focus Your Day</span>
           </h1>
           <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-            Your personal space for capturing founder journey insights. Start writing your story today.
+            Feeling overwhelmed? Brain dump your thoughts and let AI transform them into personalized insights and actionable to-dos.
           </p>
           <Button
             size="lg"
             onClick={() => navigate("/auth/login")}
             className="text-lg"
           >
-            Start Writing Now
+            Declutter Your Mind
           </Button>
         </div>
 

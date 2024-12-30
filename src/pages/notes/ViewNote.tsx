@@ -104,7 +104,14 @@ const ViewNote = () => {
               Back to Notes
             </Button>
             <Button
-              onClick={() => setIsEditing(!isEditing)}
+              onClick={() => {
+                if (isEditing) {
+                  // Reset to original values when canceling
+                  setEditedTitle(note?.title || "");
+                  setEditedContent(note?.content || "");
+                }
+                setIsEditing(!isEditing);
+              }}
               variant={isEditing ? "outline" : "default"}
             >
               {isEditing ? "Cancel" : "Edit Note"}
@@ -145,17 +152,17 @@ const ViewNote = () => {
                   </Button>
                 </div>
               </div>
-            ) : (
+            ) : note && (
               <>
                 <h1 className="text-3xl font-bold text-gray-900 mb-4">
-                  {note?.title}
+                  {note.title}
                 </h1>
                 <div className="prose max-w-none">
-                  <p className="text-gray-700 whitespace-pre-wrap">{note?.content}</p>
+                  <p className="text-gray-700 whitespace-pre-wrap">{note.content}</p>
                 </div>
                 <div className="mt-6 text-sm text-gray-500">
                   Last updated:{" "}
-                  {note?.updated_at
+                  {note.updated_at
                     ? new Date(note.updated_at).toLocaleDateString()
                     : "N/A"}
                 </div>
