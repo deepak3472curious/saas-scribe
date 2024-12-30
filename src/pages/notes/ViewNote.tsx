@@ -109,6 +109,10 @@ const ViewNote = () => {
                   // Reset to original values when canceling
                   setEditedTitle(note?.title || "");
                   setEditedContent(note?.content || "");
+                } else {
+                  // Set values when entering edit mode
+                  setEditedTitle(note?.title || "");
+                  setEditedContent(note?.content || "");
                 }
                 setIsEditing(!isEditing);
               }}
