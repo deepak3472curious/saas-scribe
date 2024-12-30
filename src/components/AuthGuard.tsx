@@ -7,14 +7,34 @@ const AuthGuard = ({ children }: { children: React.ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    // Check current session
+    const checkSession = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          navigate("/");
+        }
+      } catch (error) {
+        console.error("Session check error:", error);
+        navigate("/");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    // Run initial session check
+    checkSession();
+
+    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (!session) {
+      if (event === 'SIGNED_OUT' || !session) {
         navigate("/");
       }
-      setIsLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+    };
   }, [navigate]);
 
   if (isLoading) {
