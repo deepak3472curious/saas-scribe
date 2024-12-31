@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import MainNav from "@/components/MainNav";
+import VoiceInput from "@/components/notes/VoiceInput";
 
 const NewNote = () => {
   const navigate = useNavigate();
@@ -67,6 +68,10 @@ const NewNote = () => {
     }
   };
 
+  const handleVoiceCapture = (text: string) => {
+    setContent(content ? `${content}\n\n${text}` : text);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <MainNav />
@@ -90,13 +95,18 @@ const NewNote = () => {
               <label htmlFor="content" className="block text-sm font-medium text-gray-700">
                 Content
               </label>
-              <Textarea
-                id="content"
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                className="mt-1"
-                rows={8}
-              />
+              <div className="space-y-2">
+                <Textarea
+                  id="content"
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  className="mt-1"
+                  rows={8}
+                />
+                <div className="flex justify-start">
+                  <VoiceInput onTextCapture={handleVoiceCapture} />
+                </div>
+              </div>
             </div>
             <div className="flex justify-end space-x-4">
               <Button

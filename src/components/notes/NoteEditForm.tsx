@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Note } from "@/types/note";
+import VoiceInput from "./VoiceInput";
 
 interface NoteEditFormProps {
   note: Note;
@@ -24,6 +25,10 @@ const NoteEditForm = ({
   onCancel,
   isSaving,
 }: NoteEditFormProps) => {
+  const handleVoiceCapture = (text: string) => {
+    onContentChange(editedContent ? `${editedContent}\n\n${text}` : text);
+  };
+
   return (
     <div className="space-y-4">
       <div>
@@ -41,13 +46,18 @@ const NoteEditForm = ({
         <label htmlFor="content" className="block text-sm font-medium text-gray-700 mb-1">
           Content
         </label>
-        <Textarea
-          id="content"
-          value={editedContent}
-          onChange={(e) => onContentChange(e.target.value)}
-          rows={8}
-          className="w-full"
-        />
+        <div className="space-y-2">
+          <Textarea
+            id="content"
+            value={editedContent}
+            onChange={(e) => onContentChange(e.target.value)}
+            rows={8}
+            className="w-full"
+          />
+          <div className="flex justify-start">
+            <VoiceInput onTextCapture={handleVoiceCapture} />
+          </div>
+        </div>
       </div>
       <div className="flex justify-end space-x-4">
         <Button
