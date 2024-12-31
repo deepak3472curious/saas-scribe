@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,7 +29,7 @@ const VoiceConfirmDialog = ({
   const [editedText, setEditedText] = useState(capturedText);
 
   // Update editedText when capturedText changes
-  useState(() => {
+  useEffect(() => {
     setEditedText(capturedText);
   }, [capturedText]);
 
