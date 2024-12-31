@@ -24,8 +24,8 @@ const VoiceInput = ({ onTextCapture }: VoiceInputProps) => {
     });
   };
 
-  const handleConfirm = () => {
-    onTextCapture(capturedText);
+  const handleConfirm = (editedText: string) => {
+    onTextCapture(editedText);
     setCapturedText("");
     setShowConfirmDialog(false);
   };
