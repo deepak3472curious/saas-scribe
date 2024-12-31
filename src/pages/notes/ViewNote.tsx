@@ -107,7 +107,7 @@ const ViewNote = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <MainNav />
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8 pt-24">
         <div className="px-4 py-6 sm:px-0">
           <div className="flex justify-between items-center mb-6">
             <Button
