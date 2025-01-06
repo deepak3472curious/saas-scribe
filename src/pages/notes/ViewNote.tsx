@@ -9,6 +9,7 @@ import { useToast } from "@/components/ui/use-toast";
 import NoteDisplay from "@/components/notes/NoteDisplay";
 import NoteEditForm from "@/components/notes/NoteEditForm";
 import { Note } from "@/types/note";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const ViewNote = () => {
   const { id } = useParams();
@@ -18,6 +19,7 @@ const ViewNote = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedTitle, setEditedTitle] = useState("");
   const [editedContent, setEditedContent] = useState("");
+  const isMobile = useIsMobile();
 
   const { data: note, isLoading } = useQuery({
     queryKey: ["note", id],
@@ -107,7 +109,7 @@ const ViewNote = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <MainNav />
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8 pt-24">
+      <main className={`max-w-7xl mx-auto py-6 sm:px-6 lg:px-8 pt-24 ${isMobile ? 'px-4' : ''}`}>
         <div className="px-4 py-6 sm:px-0">
           <div className="flex justify-between items-center mb-6">
             <Button
@@ -119,7 +121,7 @@ const ViewNote = () => {
               Back to Notes
             </Button>
           </div>
-          <div className="bg-white shadow rounded-lg p-6">
+          <div className="bg-white shadow rounded-lg p-4 sm:p-6">
             {note && (
               isEditing ? (
                 <NoteEditForm

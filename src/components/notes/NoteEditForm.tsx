@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Note } from "@/types/note";
 import VoiceInput from "./VoiceInput";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface NoteEditFormProps {
   note: Note;
@@ -25,6 +26,8 @@ const NoteEditForm = ({
   onCancel,
   isSaving,
 }: NoteEditFormProps) => {
+  const isMobile = useIsMobile();
+  
   const handleVoiceCapture = (text: string) => {
     onContentChange(editedContent ? `${editedContent}\n\n${text}` : text);
   };
@@ -51,7 +54,7 @@ const NoteEditForm = ({
             id="content"
             value={editedContent}
             onChange={(e) => onContentChange(e.target.value)}
-            rows={8}
+            rows={isMobile ? 6 : 8}
             className="w-full"
           />
           <div className="flex justify-start">
@@ -59,16 +62,18 @@ const NoteEditForm = ({
           </div>
         </div>
       </div>
-      <div className="flex justify-end space-x-4">
+      <div className={`flex ${isMobile ? 'flex-col space-y-2' : 'justify-end space-x-4'}`}>
         <Button
           onClick={onCancel}
           variant="outline"
+          className={isMobile ? 'w-full' : ''}
         >
           Cancel
         </Button>
         <Button
           onClick={onSave}
           disabled={isSaving}
+          className={isMobile ? 'w-full' : ''}
         >
           {isSaving ? "Saving..." : "Save Changes"}
         </Button>

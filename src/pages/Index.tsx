@@ -14,13 +14,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface EncryptedNote {
   id: string;
   title: string;
   content: string | null;
   created_at: string;
-  encryption_iv?: string; // Made optional with ?
+  encryption_iv?: string;
 }
 
 interface DecryptedNote {
@@ -32,6 +33,7 @@ interface DecryptedNote {
 
 const Index = () => {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [selectedNote, setSelectedNote] = useState<DecryptedNote | null>(null);
 
   const { data: notes, isLoading } = useQuery({
@@ -44,9 +46,7 @@ const Index = () => {
 
       if (error) throw error;
 
-      // Decrypt the notes
       const decryptedNotes = await Promise.all((data as EncryptedNote[]).map(async (note) => {
-        // Handle cases where encryption_iv might be undefined
         if (!note.encryption_iv) {
           return {
             ...note,
@@ -78,6 +78,54 @@ const Index = () => {
     );
   }
 
+  const NotesList = () => {
+    if (isMobile) {
+      return (
+        <div className="space-y-4">
+          {notes?.map((note) => (
+            <div
+              key={note.id}
+              className="bg-white p-4 rounded-lg shadow cursor-pointer hover:shadow-md transition-shadow"
+              onClick={() => navigate(`/notes/${note.id}`)}
+            >
+              <h3 className="font-medium text-gray-900">{note.title}</h3>
+              <p className="text-sm text-gray-500 mt-1">
+                {new Date(note.created_at).toLocaleDateString()}
+              </p>
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    return (
+      <div className="bg-white shadow rounded-lg overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Title</TableHead>
+              <TableHead>Created At</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {notes?.map((note) => (
+              <TableRow
+                key={note.id}
+                className="cursor-pointer hover:bg-gray-50"
+                onClick={() => navigate(`/notes/${note.id}`)}
+              >
+                <TableCell className="font-medium">{note.title}</TableCell>
+                <TableCell>
+                  {new Date(note.created_at).toLocaleDateString()}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <MainNav />
@@ -91,30 +139,7 @@ const Index = () => {
             </Button>
           </div>
           {notes && notes.length > 0 ? (
-            <div className="bg-white shadow rounded-lg overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Title</TableHead>
-                    <TableHead>Created At</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {notes.map((note) => (
-                    <TableRow
-                      key={note.id}
-                      className="cursor-pointer hover:bg-gray-50"
-                      onClick={() => navigate(`/notes/${note.id}`)}
-                    >
-                      <TableCell className="font-medium">{note.title}</TableCell>
-                      <TableCell>
-                        {new Date(note.created_at).toLocaleDateString()}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+            <NotesList />
           ) : (
             <div className="text-center py-12">
               <Book className="mx-auto h-12 w-12 text-gray-400" />
