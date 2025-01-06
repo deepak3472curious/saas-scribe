@@ -44,17 +44,32 @@ const NewNote = () => {
     setIsSubmitting(true);
 
     try {
+      // Encrypt title and content
       const { encryptedText: encryptedTitle, iv: titleIv } = await encryptText(title);
-      const { encryptedText: encryptedContent, iv: contentIv } = await encryptText(content);
+      let encryptedContent = null;
+      let contentIv = null;
+      
+      if (content) {
+        const result = await encryptText(content);
+        encryptedContent = result.encryptedText;
+        contentIv = result.iv;
+      }
 
+      // Create the note with encrypted data
       const { error } = await supabase.from("notes").insert({
         title: encryptedTitle,
         content: encryptedContent,
         user_id: userId,
-        encryption_iv: JSON.stringify({ title: titleIv, content: contentIv })
+        encryption_iv: JSON.stringify({
+          title: titleIv,
+          content: contentIv
+        })
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
 
       toast({
         title: "Success",
