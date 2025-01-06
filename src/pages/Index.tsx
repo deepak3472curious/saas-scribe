@@ -20,7 +20,7 @@ interface EncryptedNote {
   title: string;
   content: string | null;
   created_at: string;
-  encryption_iv: string;
+  encryption_iv?: string; // Made optional with ?
 }
 
 interface DecryptedNote {
@@ -46,7 +46,16 @@ const Index = () => {
 
       // Decrypt the notes
       const decryptedNotes = await Promise.all((data as EncryptedNote[]).map(async (note) => {
-        const ivs = JSON.parse(note.encryption_iv || '{}');
+        // Handle cases where encryption_iv might be undefined
+        if (!note.encryption_iv) {
+          return {
+            ...note,
+            title: note.title,
+            content: note.content,
+          };
+        }
+
+        const ivs = JSON.parse(note.encryption_iv);
         const decryptedTitle = await decryptText(note.title, ivs.title);
         const decryptedContent = note.content ? await decryptText(note.content, ivs.content) : null;
 
