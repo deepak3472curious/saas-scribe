@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import MainNav from "@/components/MainNav";
+import { decryptText } from "@/utils/encryption";
 import {
   Table,
   TableBody,
@@ -14,7 +15,15 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-interface Note {
+interface EncryptedNote {
+  id: string;
+  title: string;
+  content: string | null;
+  created_at: string;
+  encryption_iv: string;
+}
+
+interface DecryptedNote {
   id: string;
   title: string;
   content: string | null;
@@ -23,7 +32,7 @@ interface Note {
 
 const Index = () => {
   const navigate = useNavigate();
-  const [selectedNote, setSelectedNote] = useState<Note | null>(null);
+  const [selectedNote, setSelectedNote] = useState<DecryptedNote | null>(null);
 
   const { data: notes, isLoading } = useQuery({
     queryKey: ["notes"],
@@ -34,7 +43,21 @@ const Index = () => {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data as Note[];
+
+      // Decrypt the notes
+      const decryptedNotes = await Promise.all((data as EncryptedNote[]).map(async (note) => {
+        const ivs = JSON.parse(note.encryption_iv || '{}');
+        const decryptedTitle = await decryptText(note.title, ivs.title);
+        const decryptedContent = note.content ? await decryptText(note.content, ivs.content) : null;
+
+        return {
+          ...note,
+          title: decryptedTitle,
+          content: decryptedContent,
+        };
+      }));
+
+      return decryptedNotes as DecryptedNote[];
     },
   });
 
@@ -53,6 +76,10 @@ const Index = () => {
         <div className="px-4 py-6 sm:px-0">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-semibold text-gray-900">Your Notes</h2>
+            <Button onClick={() => navigate("/notes/new")}>
+              <Plus className="mr-2 h-4 w-4" />
+              New Note
+            </Button>
           </div>
           {notes && notes.length > 0 ? (
             <div className="bg-white shadow rounded-lg overflow-hidden">

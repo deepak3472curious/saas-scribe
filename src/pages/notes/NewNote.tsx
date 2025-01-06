@@ -7,6 +7,7 @@ import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import MainNav from "@/components/MainNav";
 import VoiceInput from "@/components/notes/VoiceInput";
+import { encryptText } from "@/utils/encryption";
 
 const NewNote = () => {
   const navigate = useNavigate();
@@ -43,10 +44,14 @@ const NewNote = () => {
     setIsSubmitting(true);
 
     try {
+      const { encryptedText: encryptedTitle, iv: titleIv } = await encryptText(title);
+      const { encryptedText: encryptedContent, iv: contentIv } = await encryptText(content);
+
       const { error } = await supabase.from("notes").insert({
-        title,
-        content,
-        user_id: userId
+        title: encryptedTitle,
+        content: encryptedContent,
+        user_id: userId,
+        encryption_iv: JSON.stringify({ title: titleIv, content: contentIv })
       });
 
       if (error) throw error;
