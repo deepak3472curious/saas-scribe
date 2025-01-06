@@ -1,15 +1,19 @@
-const getEncryptionKey = () => {
-  // In a real app, this should be a secure key management system
-  // For demo purposes, we're using a fixed key
-  return new TextEncoder().encode('your-32-byte-secret-key-here-12345');
+const getEncryptionKey = async () => {
+  // Generate a consistent key using a hash of a secret
+  const encoder = new TextEncoder();
+  const data = encoder.encode('your-32-byte-secret-key-here-12345');
+  const hash = await crypto.subtle.digest('SHA-256', data);
+  return new Uint8Array(hash);
 };
 
 export const encryptText = async (text: string): Promise<{ encryptedText: string; iv: string }> => {
   const iv = crypto.getRandomValues(new Uint8Array(12));
+  const keyBuffer = await getEncryptionKey();
+  
   const key = await crypto.subtle.importKey(
     'raw',
-    getEncryptionKey(),
-    { name: 'AES-GCM' },
+    keyBuffer,
+    { name: 'AES-GCM', length: 256 },
     false,
     ['encrypt']
   );
@@ -28,10 +32,11 @@ export const encryptText = async (text: string): Promise<{ encryptedText: string
 };
 
 export const decryptText = async (encryptedText: string, iv: string): Promise<string> => {
+  const keyBuffer = await getEncryptionKey();
   const key = await crypto.subtle.importKey(
     'raw',
-    getEncryptionKey(),
-    { name: 'AES-GCM' },
+    keyBuffer,
+    { name: 'AES-GCM', length: 256 },
     false,
     ['decrypt']
   );
