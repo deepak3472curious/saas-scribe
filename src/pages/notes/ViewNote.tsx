@@ -49,7 +49,12 @@ const ViewNote = () => {
       // Handle decryption if needed
       if (data.encryption_iv) {
         try {
-          const ivs = JSON.parse(data.encryption_iv);
+          const ivs = JSON.parse(typeof data.encryption_iv === 'string' ? data.encryption_iv : JSON.stringify(data.encryption_iv));
+          
+          if (typeof ivs.title !== 'string' || (data.content && typeof ivs.content !== 'string')) {
+            throw new Error("Invalid encryption IV format");
+          }
+
           const decryptedTitle = await decryptText(data.title, ivs.title);
           const decryptedContent = data.content ? await decryptText(data.content, ivs.content) : null;
 
