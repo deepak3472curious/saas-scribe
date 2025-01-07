@@ -17,7 +17,8 @@ interface EncryptedNote {
   content: string | null;
   created_at: string;
   updated_at: string;
-  encryption_iv?: string;
+  user_id: string;
+  encryption_iv: string | null;
 }
 
 const Index = () => {
@@ -31,9 +32,15 @@ const Index = () => {
   const { data: notes, isLoading } = useQuery({
     queryKey: ["notes", filters],
     queryFn: async () => {
+      const { data: session } = await supabase.auth.getSession();
+      if (!session.session) {
+        throw new Error("No session found");
+      }
+
       let query = supabase
         .from("notes")
-        .select("*");
+        .select("*")
+        .eq('user_id', session.session.user.id);
 
       if (filters.dateRange?.from && filters.dateRange?.to) {
         query = query
@@ -54,26 +61,36 @@ const Index = () => {
 
       const { data, error } = await query;
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching notes:", error);
+        throw error;
+      }
+
+      if (!data) return [];
 
       const decryptedNotes = await Promise.all((data as EncryptedNote[]).map(async (note) => {
-        if (!note.encryption_iv) {
+        try {
+          if (!note.encryption_iv) {
+            return {
+              ...note,
+              title: note.title,
+              content: note.content,
+            };
+          }
+
+          const ivs = JSON.parse(note.encryption_iv);
+          const decryptedTitle = await decryptText(note.title, ivs.title);
+          const decryptedContent = note.content ? await decryptText(note.content, ivs.content) : null;
+
           return {
             ...note,
-            title: note.title,
-            content: note.content,
+            title: decryptedTitle,
+            content: decryptedContent,
           };
+        } catch (error) {
+          console.error("Error decrypting note:", error);
+          return note;
         }
-
-        const ivs = JSON.parse(note.encryption_iv);
-        const decryptedTitle = await decryptText(note.title, ivs.title);
-        const decryptedContent = note.content ? await decryptText(note.content, ivs.content) : null;
-
-        return {
-          ...note,
-          title: decryptedTitle,
-          content: decryptedContent,
-        };
       }));
 
       if (filters.searchTerm) {
