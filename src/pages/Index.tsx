@@ -1,20 +1,15 @@
 import { Book } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import MainNav from "@/components/MainNav";
 import { decryptText } from "@/utils/encryption";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { SearchFilters, type SearchFilters as SearchFiltersType } from "@/components/notes/SearchFilters";
+import NotesTable from "@/components/notes/NotesTable";
+import NotesList from "@/components/notes/NotesList";
+import EmptyNoteState from "@/components/notes/EmptyNoteState";
+import { DecryptedNote } from "@/types/note";
 
 interface EncryptedNote {
   id: string;
@@ -24,19 +19,11 @@ interface EncryptedNote {
   encryption_iv?: string;
 }
 
-interface DecryptedNote {
-  id: string;
-  title: string;
-  content: string | null;
-  created_at: string;
-}
-
 const Index = () => {
-  const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [filters, setFilters] = useState<SearchFiltersType>({
     searchTerm: "",
-    dateRange: null,
+    dateRange: undefined,
     sortBy: "newest",
   });
 
@@ -47,14 +34,12 @@ const Index = () => {
         .from("notes")
         .select("*");
 
-      // Apply date range filter if present
       if (filters.dateRange?.from && filters.dateRange?.to) {
         query = query
           .gte('created_at', filters.dateRange.from.toISOString())
           .lte('created_at', filters.dateRange.to.toISOString());
       }
 
-      // Apply sorting
       switch (filters.sortBy) {
         case "oldest":
           query = query.order("created_at", { ascending: true });
@@ -62,7 +47,7 @@ const Index = () => {
         case "title":
           query = query.order("title", { ascending: true });
           break;
-        default: // "newest"
+        default:
           query = query.order("created_at", { ascending: false });
       }
 
@@ -90,7 +75,6 @@ const Index = () => {
         };
       }));
 
-      // Apply search filter after decryption
       if (filters.searchTerm) {
         const searchLower = filters.searchTerm.toLowerCase();
         return decryptedNotes.filter(note => 
@@ -111,54 +95,6 @@ const Index = () => {
     );
   }
 
-  const NotesList = () => {
-    if (isMobile) {
-      return (
-        <div className="space-y-4">
-          {notes?.map((note) => (
-            <div
-              key={note.id}
-              className="bg-white p-4 rounded-lg shadow cursor-pointer hover:shadow-md transition-shadow"
-              onClick={() => navigate(`/notes/${note.id}`)}
-            >
-              <h3 className="font-medium text-gray-900">{note.title}</h3>
-              <p className="text-sm text-gray-500 mt-1">
-                {new Date(note.created_at).toLocaleDateString()}
-              </p>
-            </div>
-          ))}
-        </div>
-      );
-    }
-
-    return (
-      <div className="bg-white shadow rounded-lg overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Title</TableHead>
-              <TableHead>Created At</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {notes?.map((note) => (
-              <TableRow
-                key={note.id}
-                className="cursor-pointer hover:bg-gray-50"
-                onClick={() => navigate(`/notes/${note.id}`)}
-              >
-                <TableCell className="font-medium">{note.title}</TableCell>
-                <TableCell>
-                  {new Date(note.created_at).toLocaleDateString()}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-    );
-  };
-
   return (
     <div className="min-h-screen bg-gray-50">
       <MainNav />
@@ -171,15 +107,9 @@ const Index = () => {
           <SearchFilters onSearch={setFilters} />
           
           {notes && notes.length > 0 ? (
-            <NotesList />
+            isMobile ? <NotesList notes={notes} /> : <NotesTable notes={notes} />
           ) : (
-            <div className="text-center py-12">
-              <Book className="mx-auto h-12 w-12 text-gray-400" />
-              <h3 className="mt-2 text-sm font-semibold text-gray-900">No notes found</h3>
-              <p className="mt-1 text-sm text-gray-500">
-                {filters.searchTerm ? "Try adjusting your search or filters." : "Get started by creating a new note."}
-              </p>
-            </div>
+            <EmptyNoteState hasSearchTerm={!!filters.searchTerm} />
           )}
         </div>
       </main>
