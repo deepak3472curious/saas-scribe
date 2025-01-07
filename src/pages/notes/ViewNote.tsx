@@ -10,6 +10,7 @@ import NoteDisplay from "@/components/notes/NoteDisplay";
 import NoteEditForm from "@/components/notes/NoteEditForm";
 import { Note } from "@/types/note";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { decryptText } from "@/utils/encryption";
 
 const ViewNote = () => {
   const { id } = useParams();
@@ -24,13 +25,50 @@ const ViewNote = () => {
   const { data: note, isLoading } = useQuery({
     queryKey: ["note", id],
     queryFn: async () => {
+      const { data: session } = await supabase.auth.getSession();
+      if (!session.session) {
+        throw new Error("No session found");
+      }
+
       const { data, error } = await supabase
         .from("notes")
         .select("*")
         .eq("id", id)
+        .eq("user_id", session.session.user.id)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching note:", error);
+        throw error;
+      }
+
+      if (!data) {
+        throw new Error("Note not found");
+      }
+
+      // Handle decryption if needed
+      if (data.encryption_iv) {
+        try {
+          const ivs = JSON.parse(data.encryption_iv);
+          const decryptedTitle = await decryptText(data.title, ivs.title);
+          const decryptedContent = data.content ? await decryptText(data.content, ivs.content) : null;
+
+          return {
+            ...data,
+            title: decryptedTitle,
+            content: decryptedContent,
+          };
+        } catch (error) {
+          console.error("Error decrypting note:", error);
+          toast({
+            title: "Error",
+            description: "Failed to decrypt note",
+            variant: "destructive",
+          });
+          throw error;
+        }
+      }
+
       return data as Note;
     },
     meta: {
@@ -45,6 +83,11 @@ const ViewNote = () => {
 
   const updateNoteMutation = useMutation({
     mutationFn: async () => {
+      const { data: session } = await supabase.auth.getSession();
+      if (!session.session) {
+        throw new Error("No session found");
+      }
+
       const { error } = await supabase
         .from("notes")
         .update({
@@ -52,7 +95,8 @@ const ViewNote = () => {
           content: editedContent,
           updated_at: new Date().toISOString(),
         })
-        .eq("id", id);
+        .eq("id", id)
+        .eq("user_id", session.session.user.id);
 
       if (error) throw error;
     },
