@@ -15,6 +15,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { SearchFilters, type SearchFilters as SearchFiltersType } from "@/components/notes/SearchFilters";
 
 interface EncryptedNote {
   id: string;
@@ -34,15 +35,39 @@ interface DecryptedNote {
 const Index = () => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  const [selectedNote, setSelectedNote] = useState<DecryptedNote | null>(null);
+  const [filters, setFilters] = useState<SearchFiltersType>({
+    searchTerm: "",
+    dateRange: null,
+    sortBy: "newest",
+  });
 
   const { data: notes, isLoading } = useQuery({
-    queryKey: ["notes"],
+    queryKey: ["notes", filters],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from("notes")
-        .select("*")
-        .order("created_at", { ascending: false });
+        .select("*");
+
+      // Apply date range filter if present
+      if (filters.dateRange?.from && filters.dateRange?.to) {
+        query = query
+          .gte('created_at', filters.dateRange.from.toISOString())
+          .lte('created_at', filters.dateRange.to.toISOString());
+      }
+
+      // Apply sorting
+      switch (filters.sortBy) {
+        case "oldest":
+          query = query.order("created_at", { ascending: true });
+          break;
+        case "title":
+          query = query.order("title", { ascending: true });
+          break;
+        default: // "newest"
+          query = query.order("created_at", { ascending: false });
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
 
@@ -65,6 +90,15 @@ const Index = () => {
           content: decryptedContent,
         };
       }));
+
+      // Apply search filter after decryption
+      if (filters.searchTerm) {
+        const searchLower = filters.searchTerm.toLowerCase();
+        return decryptedNotes.filter(note => 
+          note.title.toLowerCase().includes(searchLower) ||
+          (note.content && note.content.toLowerCase().includes(searchLower))
+        );
+      }
 
       return decryptedNotes as DecryptedNote[];
     },
@@ -138,21 +172,26 @@ const Index = () => {
               New Note
             </Button>
           </div>
+          
+          <SearchFilters onSearch={setFilters} />
+          
           {notes && notes.length > 0 ? (
             <NotesList />
           ) : (
             <div className="text-center py-12">
               <Book className="mx-auto h-12 w-12 text-gray-400" />
-              <h3 className="mt-2 text-sm font-semibold text-gray-900">No notes</h3>
+              <h3 className="mt-2 text-sm font-semibold text-gray-900">No notes found</h3>
               <p className="mt-1 text-sm text-gray-500">
-                Get started by creating a new note.
+                {filters.searchTerm ? "Try adjusting your search or filters." : "Get started by creating a new note."}
               </p>
-              <div className="mt-6">
-                <Button onClick={() => navigate("/notes/new")}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  New Note
-                </Button>
-              </div>
+              {!filters.searchTerm && (
+                <div className="mt-6">
+                  <Button onClick={() => navigate("/notes/new")}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    New Note
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </div>
