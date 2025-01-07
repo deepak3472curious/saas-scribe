@@ -9,7 +9,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { DatePickerWithRange } from "@/components/ui/date-range-picker";
-import { addDays } from "date-fns";
+import { DateRange } from "react-day-picker";
 import { useState } from "react";
 
 export interface SearchFiltersProps {
@@ -18,16 +18,13 @@ export interface SearchFiltersProps {
 
 export interface SearchFilters {
   searchTerm: string;
-  dateRange?: {
-    from: Date;
-    to: Date;
-  } | null;
+  dateRange: DateRange | undefined;
   sortBy: "newest" | "oldest" | "title";
 }
 
 export const SearchFilters = ({ onSearch }: SearchFiltersProps) => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [dateRange, setDateRange] = useState<{ from: Date; to: Date } | null>(null);
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   const [sortBy, setSortBy] = useState<"newest" | "oldest" | "title">("newest");
 
   const handleSearch = () => {
@@ -40,11 +37,11 @@ export const SearchFilters = ({ onSearch }: SearchFiltersProps) => {
 
   const handleClear = () => {
     setSearchTerm("");
-    setDateRange(null);
+    setDateRange(undefined);
     setSortBy("newest");
     onSearch({
       searchTerm: "",
-      dateRange: null,
+      dateRange: undefined,
       sortBy: "newest",
     });
   };
