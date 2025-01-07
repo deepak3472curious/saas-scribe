@@ -1,11 +1,10 @@
-import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
-import { Plus, Book } from "lucide-react";
+import { Book } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import MainNav from "@/components/MainNav";
 import { decryptText } from "@/utils/encryption";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Table,
   TableBody,
@@ -167,10 +166,6 @@ const Index = () => {
         <div className="px-4 py-6 sm:px-0">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-semibold text-gray-900">Your Notes</h2>
-            <Button onClick={() => navigate("/notes/new")}>
-              <Plus className="mr-2 h-4 w-4" />
-              New Note
-            </Button>
           </div>
           
           <SearchFilters onSearch={setFilters} />
@@ -184,14 +179,6 @@ const Index = () => {
               <p className="mt-1 text-sm text-gray-500">
                 {filters.searchTerm ? "Try adjusting your search or filters." : "Get started by creating a new note."}
               </p>
-              {!filters.searchTerm && (
-                <div className="mt-6">
-                  <Button onClick={() => navigate("/notes/new")}>
-                    <Plus className="mr-2 h-4 w-4" />
-                    New Note
-                  </Button>
-                </div>
-              )}
             </div>
           )}
         </div>

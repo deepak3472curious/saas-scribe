@@ -1,4 +1,4 @@
-import { Book, Home, LogOut, User, LogIn, Plus, Search, Menu, X } from "lucide-react";
+import { Book, Home, LogOut, User, LogIn, Plus, Menu, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -80,23 +80,14 @@ const MainNav = () => {
   const ActionButtons = () => (
     <div className={`${isMobile ? 'flex flex-col space-y-4' : 'flex items-center space-x-4'}`}>
       {isAuthenticated && (
-        <>
-          <Button
-            variant="outline"
-            className="flex items-center"
-            onClick={() => console.log("Search functionality coming soon")}
-          >
-            <Search className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="default"
-            className="flex items-center"
-            onClick={() => navigate("/notes/new")}
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            New Note
-          </Button>
-        </>
+        <Button
+          variant="default"
+          className="flex items-center"
+          onClick={() => navigate("/notes/new")}
+        >
+          <Plus className="mr-2 h-4 w-4" />
+          New Note
+        </Button>
       )}
       {isAuthenticated ? (
         <Button variant="outline" onClick={handleLogout} className="flex items-center">
