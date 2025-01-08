@@ -10,11 +10,17 @@ export const useSpeechRecognition = () => {
   const hasSpokenRef = useRef(false);
 
   const resetSilenceTimeout = useCallback(() => {
+    console.log('Resetting silence timeout');
     if (silenceTimeoutRef.current) {
       clearTimeout(silenceTimeoutRef.current);
     }
     silenceTimeoutRef.current = setTimeout(() => {
+      console.log('Silence timeout triggered');
+      console.log('Has spoken:', hasSpokenRef.current);
+      console.log('Is recording:', isRecording);
+      
       if (!hasSpokenRef.current && isRecording) {
+        console.log('Showing silence toast');
         toast({
           title: "Are you saying something?",
           description: "I'm not able to recognize anything. Please check your microphone.",
@@ -22,6 +28,7 @@ export const useSpeechRecognition = () => {
             <div className="flex gap-2">
               <button
                 onClick={() => {
+                  console.log('Try Again clicked');
                   if (recognition) {
                     recognition.stop();
                     setIsRecording(false);
@@ -34,6 +41,7 @@ export const useSpeechRecognition = () => {
               </button>
               <button
                 onClick={() => {
+                  console.log('Back clicked');
                   if (recognition) {
                     recognition.stop();
                     setIsRecording(false);
@@ -53,6 +61,7 @@ export const useSpeechRecognition = () => {
   }, [isRecording, toast]);
 
   const startRecording = useCallback((onTextCaptured: (text: string) => void) => {
+    console.log('Starting recording');
     if (!('webkitSpeechRecognition' in window)) {
       toast({
         title: "Error",
@@ -76,7 +85,9 @@ export const useSpeechRecognition = () => {
         .map(result => result.transcript)
         .join('');
       
+      console.log('Transcript received:', transcript);
       if (transcript.trim()) {
+        console.log('Valid transcript detected, marking as spoken');
         hasSpokenRef.current = true;
         if (silenceTimeoutRef.current) {
           clearTimeout(silenceTimeoutRef.current);
@@ -97,6 +108,9 @@ export const useSpeechRecognition = () => {
     };
 
     recognition.onend = () => {
+      console.log('Recognition ended');
+      console.log('Final captured text:', capturedText);
+      console.log('Has spoken:', hasSpokenRef.current);
       if (capturedText && hasSpokenRef.current) {
         onTextCaptured(capturedText);
       }
@@ -112,6 +126,7 @@ export const useSpeechRecognition = () => {
   }, [capturedText, toast, resetSilenceTimeout]);
 
   const stopRecording = useCallback(() => {
+    console.log('Stopping recording');
     if (recognition) {
       recognition.stop();
       setIsRecording(false);
