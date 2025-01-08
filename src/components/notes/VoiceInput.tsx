@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Mic, Square, RefreshCw, ArrowLeft } from "lucide-react";
+import { Mic, Square, RefreshCw } from "lucide-react";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import VoiceConfirmDialog from "./VoiceConfirmDialog";
 
@@ -40,11 +40,6 @@ const VoiceInput = ({ onTextCapture }: VoiceInputProps) => {
     handleStartRecording();
   };
 
-  const handleBack = () => {
-    setCapturedText("");
-    setShowConfirmDialog(false);
-  };
-
   return (
     <>
       <div className="flex gap-2">
@@ -77,15 +72,6 @@ const VoiceInput = ({ onTextCapture }: VoiceInputProps) => {
             >
               <RefreshCw className="h-4 w-4" />
               Try Again
-            </Button>
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={handleBack}
-              className="flex items-center gap-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back
             </Button>
           </>
         )}
