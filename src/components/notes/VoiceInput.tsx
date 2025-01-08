@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Mic, Square } from "lucide-react";
+import { Mic, Square, RefreshCw } from "lucide-react";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import VoiceConfirmDialog from "./VoiceConfirmDialog";
 
@@ -35,26 +35,44 @@ const VoiceInput = ({ onTextCapture }: VoiceInputProps) => {
     setShowConfirmDialog(false);
   };
 
+  const handleRetry = () => {
+    setCapturedText("");
+    handleStartRecording();
+  };
+
   return (
     <>
-      <Button
-        type="button"
-        variant="outline"
-        onClick={isRecording ? stopRecording : handleStartRecording}
-        className="flex items-center gap-2"
-      >
-        {isRecording ? (
-          <>
-            <Square className="h-4 w-4" />
-            Stop Recording
-          </>
-        ) : (
-          <>
-            <Mic className="h-4 w-4" />
-            Record Voice
-          </>
+      <div className="flex gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={isRecording ? stopRecording : handleStartRecording}
+          className="flex items-center gap-2"
+        >
+          {isRecording ? (
+            <>
+              <Square className="h-4 w-4" />
+              Stop Recording
+            </>
+          ) : (
+            <>
+              <Mic className="h-4 w-4" />
+              Record Voice
+            </>
+          )}
+        </Button>
+        {!isRecording && (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleRetry}
+            className="flex items-center gap-2"
+          >
+            <RefreshCw className="h-4 w-4" />
+            Try Again
+          </Button>
         )}
-      </Button>
+      </div>
 
       <VoiceConfirmDialog
         open={showConfirmDialog}

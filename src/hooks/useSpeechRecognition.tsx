@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { useToast } from "@/components/ui/use-toast";
 
 export const useSpeechRecognition = () => {
@@ -6,6 +6,24 @@ export const useSpeechRecognition = () => {
   const [recognition, setRecognition] = useState<SpeechRecognition | null>(null);
   const [capturedText, setCapturedText] = useState("");
   const { toast } = useToast();
+  const silenceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const hasSpokenRef = useRef(false);
+
+  const resetSilenceTimeout = useCallback(() => {
+    if (silenceTimeoutRef.current) {
+      clearTimeout(silenceTimeoutRef.current);
+    }
+    silenceTimeoutRef.current = setTimeout(() => {
+      if (!hasSpokenRef.current && isRecording) {
+        toast({
+          title: "No voice detected",
+          description: "Please try speaking again or check your microphone.",
+          variant: "destructive",
+        });
+        stopRecording();
+      }
+    }, 5000); // 5 seconds of silence
+  }, [isRecording, toast]);
 
   const startRecording = useCallback((onTextCaptured: (text: string) => void) => {
     if (!('webkitSpeechRecognition' in window)) {
@@ -22,11 +40,21 @@ export const useSpeechRecognition = () => {
     recognition.interimResults = true;
     recognition.lang = 'en-US';
 
+    hasSpokenRef.current = false;
+    resetSilenceTimeout();
+
     recognition.onresult = (event) => {
       const transcript = Array.from(event.results)
         .map(result => result[0])
         .map(result => result.transcript)
         .join('');
+      
+      if (transcript.trim()) {
+        hasSpokenRef.current = true;
+        if (silenceTimeoutRef.current) {
+          clearTimeout(silenceTimeoutRef.current);
+        }
+      }
       
       setCapturedText(transcript);
     };
@@ -42,21 +70,27 @@ export const useSpeechRecognition = () => {
     };
 
     recognition.onend = () => {
-      if (capturedText) {
+      if (capturedText && hasSpokenRef.current) {
         onTextCaptured(capturedText);
       }
       setIsRecording(false);
+      if (silenceTimeoutRef.current) {
+        clearTimeout(silenceTimeoutRef.current);
+      }
     };
 
     recognition.start();
     setRecognition(recognition);
     setIsRecording(true);
-  }, [capturedText, toast]);
+  }, [capturedText, toast, resetSilenceTimeout]);
 
   const stopRecording = useCallback(() => {
     if (recognition) {
       recognition.stop();
       setIsRecording(false);
+    }
+    if (silenceTimeoutRef.current) {
+      clearTimeout(silenceTimeoutRef.current);
     }
   }, [recognition]);
 
