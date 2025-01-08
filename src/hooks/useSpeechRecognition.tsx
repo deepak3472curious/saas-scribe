@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from "react";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 export const useSpeechRecognition = () => {
   const [isRecording, setIsRecording] = useState(false);
@@ -16,8 +16,35 @@ export const useSpeechRecognition = () => {
     silenceTimeoutRef.current = setTimeout(() => {
       if (!hasSpokenRef.current && isRecording) {
         toast({
-          title: "No voice detected",
-          description: "Please try speaking again or check your microphone.",
+          title: "Are you saying something?",
+          description: "I'm not able to recognize anything. Please check your microphone.",
+          action: (
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  if (recognition) {
+                    recognition.stop();
+                    setIsRecording(false);
+                    startRecording(() => {});
+                  }
+                }}
+                className="bg-primary text-primary-foreground hover:bg-primary/90 h-8 rounded-md px-3 text-xs"
+              >
+                Try Again
+              </button>
+              <button
+                onClick={() => {
+                  if (recognition) {
+                    recognition.stop();
+                    setIsRecording(false);
+                  }
+                }}
+                className="bg-secondary text-secondary-foreground hover:bg-secondary/80 h-8 rounded-md px-3 text-xs"
+              >
+                Back
+              </button>
+            </div>
+          ),
           variant: "destructive",
         });
         stopRecording();
