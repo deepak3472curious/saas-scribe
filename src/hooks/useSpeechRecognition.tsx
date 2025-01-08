@@ -49,7 +49,7 @@ export const useSpeechRecognition = () => {
         });
         stopRecording();
       }
-    }, 5000); // 5 seconds of silence
+    }, 4000); // 4 seconds of silence
   }, [isRecording, toast]);
 
   const startRecording = useCallback((onTextCaptured: (text: string) => void) => {
