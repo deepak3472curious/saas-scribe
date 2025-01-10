@@ -1,7 +1,9 @@
 import { useState, useCallback, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { createSpeechRecognition, handleSilence } from "@/utils/speechUtils";
+import type { SpeechRecognitionState, SpeechRecognitionCallback } from "@/types/speech";
 
-export const useSpeechRecognition = () => {
+export const useSpeechRecognition = (): SpeechRecognitionState => {
   const [isRecording, setIsRecording] = useState(false);
   const [recognition, setRecognition] = useState<SpeechRecognition | null>(null);
   const [capturedText, setCapturedText] = useState("");
@@ -15,71 +17,25 @@ export const useSpeechRecognition = () => {
       clearTimeout(silenceTimeoutRef.current);
     }
     silenceTimeoutRef.current = setTimeout(() => {
-      console.log('Silence timeout triggered');
-      console.log('Has spoken:', hasSpokenRef.current);
-      console.log('Is recording:', isRecording);
-      
-      if (!hasSpokenRef.current && isRecording) {
-        console.log('Showing silence toast');
-        toast({
-          title: "Are you saying something?",
-          description: "I'm not able to recognize anything. Please check your microphone.",
-          action: (
-            <div className="flex gap-2">
-              <button
-                onClick={() => {
-                  console.log('Try Again clicked');
-                  if (recognition) {
-                    recognition.stop();
-                    setIsRecording(false);
-                    startRecording(() => {});
-                  }
-                }}
-                className="bg-primary text-primary-foreground hover:bg-primary/90 h-8 rounded-md px-3 text-xs"
-              >
-                Try Again
-              </button>
-              <button
-                onClick={() => {
-                  console.log('Back clicked');
-                  if (recognition) {
-                    recognition.stop();
-                    setIsRecording(false);
-                  }
-                }}
-                className="bg-secondary text-secondary-foreground hover:bg-secondary/80 h-8 rounded-md px-3 text-xs"
-              >
-                Back
-              </button>
-            </div>
-          ),
-          variant: "destructive",
-        });
-        stopRecording();
-      }
-    }, 4000); // 4 seconds of silence
-  }, [isRecording, toast]);
+      handleSilence(
+        hasSpokenRef.current,
+        isRecording,
+        recognition,
+        setIsRecording,
+        () => startRecording(() => {})
+      );
+    }, 4000);
+  }, [isRecording, recognition]);
 
-  const startRecording = useCallback((onTextCaptured: (text: string) => void) => {
+  const startRecording = useCallback((onTextCaptured: SpeechRecognitionCallback) => {
     console.log('Starting recording');
-    if (!('webkitSpeechRecognition' in window)) {
-      toast({
-        title: "Error",
-        description: "Speech recognition is not supported in your browser.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const recognition = new webkitSpeechRecognition();
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.lang = 'en-US';
+    const newRecognition = createSpeechRecognition();
+    if (!newRecognition) return;
 
     hasSpokenRef.current = false;
     resetSilenceTimeout();
 
-    recognition.onresult = (event) => {
+    newRecognition.onresult = (event) => {
       const transcript = Array.from(event.results)
         .map(result => result[0])
         .map(result => result.transcript)
@@ -97,7 +53,7 @@ export const useSpeechRecognition = () => {
       setCapturedText(transcript);
     };
 
-    recognition.onerror = (event) => {
+    newRecognition.onerror = (event) => {
       console.error('Speech recognition error:', event.error);
       toast({
         title: "Error",
@@ -107,7 +63,7 @@ export const useSpeechRecognition = () => {
       stopRecording();
     };
 
-    recognition.onend = () => {
+    newRecognition.onend = () => {
       console.log('Recognition ended');
       console.log('Final captured text:', capturedText);
       console.log('Has spoken:', hasSpokenRef.current);
@@ -120,8 +76,8 @@ export const useSpeechRecognition = () => {
       }
     };
 
-    recognition.start();
-    setRecognition(recognition);
+    newRecognition.start();
+    setRecognition(newRecognition);
     setIsRecording(true);
   }, [capturedText, toast, resetSilenceTimeout]);
 
