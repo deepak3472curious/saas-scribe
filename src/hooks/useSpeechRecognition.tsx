@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { createSpeechRecognition, handleSilence } from "@/utils/speechUtils";
+import { createSpeechRecognition } from "@/utils/speechUtils";
 import type { SpeechRecognitionState, SpeechRecognitionCallback } from "@/types/speech";
 
 export const useSpeechRecognition = (): SpeechRecognitionState => {
@@ -16,8 +16,14 @@ export const useSpeechRecognition = (): SpeechRecognitionState => {
     if (silenceTimeoutRef.current) {
       clearTimeout(silenceTimeoutRef.current);
     }
+
     silenceTimeoutRef.current = setTimeout(() => {
+      console.log('Silence timeout triggered');
+      console.log('Has spoken:', hasSpokenRef.current);
+      console.log('Is recording:', isRecording);
+
       if (!hasSpokenRef.current && isRecording) {
+        console.log('Showing silence toast');
         toast({
           title: "No Speech Detected",
           description: "Please check your microphone and try speaking again.",
