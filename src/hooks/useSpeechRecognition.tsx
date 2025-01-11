@@ -11,30 +11,38 @@ export const useSpeechRecognition = (): SpeechRecognitionState => {
   const silenceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const hasSpokenRef = useRef(false);
 
-  const resetSilenceTimeout = useCallback(() => {
-    console.log('Resetting silence timeout');
+  const clearSilenceTimeout = useCallback(() => {
     if (silenceTimeoutRef.current) {
       clearTimeout(silenceTimeoutRef.current);
+      silenceTimeoutRef.current = null;
     }
+  }, []);
 
-    silenceTimeoutRef.current = setTimeout(() => {
-      console.log('Silence timeout triggered');
-      console.log('Has spoken:', hasSpokenRef.current);
-      console.log('Is recording:', isRecording);
+  const resetSilenceTimeout = useCallback(() => {
+    console.log('Resetting silence timeout');
+    clearSilenceTimeout();
 
-      if (!hasSpokenRef.current && isRecording) {
-        console.log('Showing silence toast');
-        toast({
-          title: "No Speech Detected",
-          description: "Please check your microphone and try speaking again.",
-          variant: "destructive",
-        });
-        if (recognition) {
-          recognition.stop();
-          setIsRecording(false);
+    // Only set the timeout if we're recording
+    if (isRecording) {
+      silenceTimeoutRef.current = setTimeout(() => {
+        console.log('Silence timeout triggered');
+        console.log('Has spoken:', hasSpokenRef.current);
+        console.log('Is recording:', isRecording);
+
+        if (!hasSpokenRef.current) {
+          console.log('Showing silence toast');
+          toast({
+            title: "No Speech Detected",
+            description: "Please check your microphone and try speaking again.",
+            variant: "destructive",
+          });
+          if (recognition) {
+            recognition.stop();
+            setIsRecording(false);
+          }
         }
-      }
-    }, 4000);
+      }, 4000);
+    }
   }, [isRecording, recognition, toast]);
 
   const startRecording = useCallback((onTextCaptured: SpeechRecognitionCallback) => {
@@ -42,8 +50,15 @@ export const useSpeechRecognition = (): SpeechRecognitionState => {
     const newRecognition = createSpeechRecognition();
     if (!newRecognition) return;
 
+    // Reset state for new recording
     hasSpokenRef.current = false;
-    resetSilenceTimeout();
+    clearSilenceTimeout();
+    
+    newRecognition.onstart = () => {
+      setIsRecording(true);
+      // Start silence detection after recognition has started
+      resetSilenceTimeout();
+    };
 
     newRecognition.onresult = (event) => {
       const transcript = Array.from(event.results)
@@ -55,9 +70,7 @@ export const useSpeechRecognition = (): SpeechRecognitionState => {
       if (transcript.trim()) {
         console.log('Valid transcript detected, marking as spoken');
         hasSpokenRef.current = true;
-        if (silenceTimeoutRef.current) {
-          clearTimeout(silenceTimeoutRef.current);
-        }
+        clearSilenceTimeout();
       }
       
       setCapturedText(transcript);
@@ -65,11 +78,13 @@ export const useSpeechRecognition = (): SpeechRecognitionState => {
 
     newRecognition.onerror = (event) => {
       console.error('Speech recognition error:', event.error);
-      toast({
-        title: "Error",
-        description: "An error occurred during voice recognition.",
-        variant: "destructive",
-      });
+      if (event.error !== 'no-speech') {
+        toast({
+          title: "Error",
+          description: "An error occurred during voice recognition.",
+          variant: "destructive",
+        });
+      }
       stopRecording();
     };
 
@@ -81,15 +96,12 @@ export const useSpeechRecognition = (): SpeechRecognitionState => {
         onTextCaptured(capturedText);
       }
       setIsRecording(false);
-      if (silenceTimeoutRef.current) {
-        clearTimeout(silenceTimeoutRef.current);
-      }
+      clearSilenceTimeout();
     };
 
     newRecognition.start();
     setRecognition(newRecognition);
-    setIsRecording(true);
-  }, [capturedText, toast, resetSilenceTimeout]);
+  }, [capturedText, toast, clearSilenceTimeout, resetSilenceTimeout]);
 
   const stopRecording = useCallback(() => {
     console.log('Stopping recording');
@@ -97,10 +109,8 @@ export const useSpeechRecognition = (): SpeechRecognitionState => {
       recognition.stop();
       setIsRecording(false);
     }
-    if (silenceTimeoutRef.current) {
-      clearTimeout(silenceTimeoutRef.current);
-    }
-  }, [recognition]);
+    clearSilenceTimeout();
+  }, [recognition, clearSilenceTimeout]);
 
   return {
     isRecording,
