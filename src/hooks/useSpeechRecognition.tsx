@@ -17,15 +17,19 @@ export const useSpeechRecognition = (): SpeechRecognitionState => {
       clearTimeout(silenceTimeoutRef.current);
     }
     silenceTimeoutRef.current = setTimeout(() => {
-      handleSilence(
-        hasSpokenRef.current,
-        isRecording,
-        recognition,
-        setIsRecording,
-        () => startRecording(() => {})
-      );
+      if (!hasSpokenRef.current && isRecording) {
+        toast({
+          title: "No Speech Detected",
+          description: "Please check your microphone and try speaking again.",
+          variant: "destructive",
+        });
+        if (recognition) {
+          recognition.stop();
+          setIsRecording(false);
+        }
+      }
     }, 4000);
-  }, [isRecording, recognition]);
+  }, [isRecording, recognition, toast]);
 
   const startRecording = useCallback((onTextCaptured: SpeechRecognitionCallback) => {
     console.log('Starting recording');

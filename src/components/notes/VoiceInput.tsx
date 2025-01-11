@@ -62,7 +62,7 @@ const VoiceInput = ({ onTextCapture }: VoiceInputProps) => {
               className="flex items-center gap-2"
             >
               <Mic className="h-4 w-4" />
-              Record Voice
+              Voice to Text
             </Button>
             <Button
               type="button"
