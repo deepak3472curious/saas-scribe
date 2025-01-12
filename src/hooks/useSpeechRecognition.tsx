@@ -39,6 +39,35 @@ export const useSpeechRecognition = (): SpeechRecognitionState => {
             title: "No Speech Detected",
             description: "Please check your microphone and try speaking again.",
             variant: "destructive",
+            action: (
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    console.log('Try Again clicked');
+                    if (newRecognition) {
+                      newRecognition.stop();
+                      setIsRecording(false);
+                      startRecording(onTextCaptured);
+                    }
+                  }}
+                  className="bg-primary text-primary-foreground hover:bg-primary/90 h-8 rounded-md px-3 text-xs"
+                >
+                  Try Again
+                </button>
+                <button
+                  onClick={() => {
+                    console.log('Back clicked');
+                    if (newRecognition) {
+                      newRecognition.stop();
+                      setIsRecording(false);
+                    }
+                  }}
+                  className="bg-secondary text-secondary-foreground hover:bg-secondary/80 h-8 rounded-md px-3 text-xs"
+                >
+                  Go Back
+                </button>
+              </div>
+            ),
           });
           newRecognition.stop();
           setIsRecording(false);
