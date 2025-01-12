@@ -1,149 +1,100 @@
-import { useState, useCallback, useRef } from "react";
-import { useToast } from "@/hooks/use-toast";
+import { useState, useCallback } from "react";
+import { toast } from "@/components/ui/use-toast";
 import { createSpeechRecognition } from "@/utils/speechUtils";
-import type { SpeechRecognitionState, SpeechRecognitionCallback } from "@/types/speech";
+import { SpeechRecognitionState } from "@/types/speech";
+import SpeechRecognitionToastActions from "@/components/notes/SpeechRecognitionToastActions";
 
 export const useSpeechRecognition = (): SpeechRecognitionState => {
   const [isRecording, setIsRecording] = useState(false);
-  const [recognition, setRecognition] = useState<SpeechRecognition | null>(null);
   const [capturedText, setCapturedText] = useState("");
-  const { toast } = useToast();
-  const silenceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const hasSpokenRef = useRef(false);
+  const [recognition, setRecognition] = useState<SpeechRecognition | null>(null);
 
-  const clearSilenceTimeout = useCallback(() => {
-    if (silenceTimeoutRef.current) {
-      clearTimeout(silenceTimeoutRef.current);
-      silenceTimeoutRef.current = null;
-    }
-  }, []);
-
-  const startRecording = useCallback((onTextCaptured: SpeechRecognitionCallback) => {
-    console.log('Starting recording');
+  const startRecording = useCallback((onTextCaptured: (text: string) => void) => {
     const newRecognition = createSpeechRecognition();
     if (!newRecognition) return;
 
-    // Reset state for new recording
-    hasSpokenRef.current = false;
-    clearSilenceTimeout();
-    
+    setRecognition(newRecognition);
+    let silenceTimeout: NodeJS.Timeout;
+    let hasSpoken = false;
+
     newRecognition.onstart = () => {
-      console.log('Recognition started');
-      setIsRecording(true);
-      // Start silence detection only after recognition has actually started
-      silenceTimeoutRef.current = setTimeout(() => {
-        console.log('Silence timeout triggered');
-        if (!hasSpokenRef.current) {
-          console.log('No speech detected, showing toast');
+      console.log('Speech recognition started');
+      silenceTimeout = setTimeout(() => {
+        if (!hasSpoken && isRecording) {
           toast({
             title: "No Speech Detected",
             description: "Please check your microphone and try speaking again.",
             variant: "destructive",
             action: (
-              <div className="flex gap-2">
-                <button
-                  onClick={() => {
-                    console.log('Try Again clicked');
-                    if (newRecognition) {
-                      newRecognition.stop();
-                      setIsRecording(false);
-                      startRecording(onTextCaptured);
-                    }
-                  }}
-                  className="bg-primary text-primary-foreground hover:bg-primary/90 h-8 rounded-md px-3 text-xs"
-                >
-                  Try Again
-                </button>
-                <button
-                  onClick={() => {
-                    console.log('Back clicked');
-                    if (newRecognition) {
-                      newRecognition.stop();
-                      setIsRecording(false);
-                    }
-                  }}
-                  className="bg-secondary text-secondary-foreground hover:bg-secondary/80 h-8 rounded-md px-3 text-xs"
-                >
-                  Go Back
-                </button>
-              </div>
+              <SpeechRecognitionToastActions
+                recognition={newRecognition}
+                setIsRecording={setIsRecording}
+                startRecording={startRecording}
+                onTextCaptured={onTextCaptured}
+              />
             ),
           });
           newRecognition.stop();
           setIsRecording(false);
         }
-      }, 4000);
+      }, 5000);
     };
 
     newRecognition.onresult = (event) => {
+      hasSpoken = true;
       const transcript = Array.from(event.results)
-        .map(result => result[0])
-        .map(result => result.transcript)
-        .join('');
-      
-      console.log('Transcript received:', transcript);
-      if (transcript.trim()) {
-        console.log('Valid transcript detected, marking as spoken');
-        hasSpokenRef.current = true;
-        clearSilenceTimeout();
-      }
-      
+        .map(result => result[0].transcript)
+        .join(" ");
       setCapturedText(transcript);
     };
 
-    newRecognition.onerror = (event) => {
-      console.error('Speech recognition error:', event.error);
-      // Only show error toast for errors other than no-speech
-      if (event.error !== 'no-speech') {
-        toast({
-          title: "Error",
-          description: "An error occurred during voice recognition.",
-          variant: "destructive",
-        });
-      }
-      stopRecording();
-    };
-
     newRecognition.onend = () => {
-      console.log('Recognition ended');
-      console.log('Final captured text:', capturedText);
-      console.log('Has spoken:', hasSpokenRef.current);
-      
-      clearSilenceTimeout();
-      
-      if (capturedText && hasSpokenRef.current) {
+      console.log('Speech recognition ended');
+      clearTimeout(silenceTimeout);
+      if (hasSpoken) {
         onTextCaptured(capturedText);
       }
       setIsRecording(false);
     };
 
+    newRecognition.onerror = (event) => {
+      console.error('Speech recognition error:', event.error);
+      if (event.error !== 'no-speech') {
+        toast({
+          title: "Error",
+          description: "There was an error with speech recognition. Please try again.",
+          variant: "destructive",
+        });
+      }
+      clearTimeout(silenceTimeout);
+      setIsRecording(false);
+    };
+
     try {
       newRecognition.start();
-      setRecognition(newRecognition);
+      setIsRecording(true);
     } catch (error) {
-      console.error('Failed to start recognition:', error);
+      console.error('Error starting speech recognition:', error);
       toast({
         title: "Error",
-        description: "Failed to start voice recognition.",
+        description: "Failed to start speech recognition. Please try again.",
         variant: "destructive",
       });
-    }
-  }, [capturedText, toast, clearSilenceTimeout]);
-
-  const stopRecording = useCallback(() => {
-    console.log('Stopping recording');
-    if (recognition) {
-      recognition.stop();
       setIsRecording(false);
     }
-    clearSilenceTimeout();
-  }, [recognition, clearSilenceTimeout]);
+  }, [capturedText, isRecording]);
+
+  const stopRecording = useCallback(() => {
+    if (recognition) {
+      recognition.stop();
+    }
+  }, [recognition]);
 
   return {
     isRecording,
     capturedText,
     setCapturedText,
     startRecording,
-    stopRecording
+    stopRecording,
   };
 };
