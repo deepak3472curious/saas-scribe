@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "@/hooks/use-toast";
 import { createSpeechRecognition } from "@/utils/speechUtils";
 import { SpeechRecognitionState } from "@/types/speech";
 import SpeechRecognitionToastActions from "@/components/notes/SpeechRecognitionToastActions";
@@ -33,6 +33,7 @@ export const useSpeechRecognition = (): SpeechRecognitionState => {
                 onTextCaptured={onTextCaptured}
               />
             ),
+            duration: 5000,
           });
           newRecognition.stop();
           setIsRecording(false);
@@ -64,6 +65,7 @@ export const useSpeechRecognition = (): SpeechRecognitionState => {
           title: "Error",
           description: "There was an error with speech recognition. Please try again.",
           variant: "destructive",
+          duration: 5000,
         });
       }
       clearTimeout(silenceTimeout);
@@ -79,6 +81,7 @@ export const useSpeechRecognition = (): SpeechRecognitionState => {
         title: "Error",
         description: "Failed to start speech recognition. Please try again.",
         variant: "destructive",
+        duration: 5000,
       });
       setIsRecording(false);
     }
