@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Mic, Square, RefreshCw } from "lucide-react";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import VoiceConfirmDialog from "./VoiceConfirmDialog";
-import { Toaster } from "@/components/ui/sonner";
 
 interface VoiceInputProps {
   onTextCapture: (text: string) => void;
@@ -43,7 +42,6 @@ const VoiceInput = ({ onTextCapture }: VoiceInputProps) => {
 
   return (
     <>
-      <Toaster />
       <div className="flex gap-2">
         {isRecording ? (
           <Button

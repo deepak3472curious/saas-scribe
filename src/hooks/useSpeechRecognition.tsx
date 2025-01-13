@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { createSpeechRecognition } from "@/utils/speechUtils";
 import { SpeechRecognitionState } from "@/types/speech";
 import SpeechRecognitionToastActions from "@/components/notes/SpeechRecognitionToastActions";
@@ -21,19 +21,19 @@ export const useSpeechRecognition = (): SpeechRecognitionState => {
       console.log('Speech recognition started');
       silenceTimeout = setTimeout(() => {
         if (!hasSpoken && isRecording) {
-          toast({
-            title: "No Speech Detected",
+          console.log('No speech detected, showing toast');
+          toast("No Speech Detected", {
             description: "Please check your microphone and try speaking again.",
-            variant: "destructive",
-            action: (
-              <SpeechRecognitionToastActions
-                recognition={newRecognition}
-                setIsRecording={setIsRecording}
-                startRecording={startRecording}
-                onTextCaptured={onTextCaptured}
-              />
-            ),
-            duration: 5000,
+            action: {
+              label: "Try Again",
+              onClick: () => {
+                if (newRecognition) {
+                  newRecognition.stop();
+                  setIsRecording(false);
+                  startRecording(onTextCaptured);
+                }
+              },
+            },
           });
           newRecognition.stop();
           setIsRecording(false);
@@ -61,11 +61,9 @@ export const useSpeechRecognition = (): SpeechRecognitionState => {
     newRecognition.onerror = (event) => {
       console.error('Speech recognition error:', event.error);
       if (event.error !== 'no-speech') {
-        toast({
-          title: "Error",
+        console.log('Showing error toast');
+        toast.error("Error", {
           description: "There was an error with speech recognition. Please try again.",
-          variant: "destructive",
-          duration: 5000,
         });
       }
       clearTimeout(silenceTimeout);
@@ -77,11 +75,8 @@ export const useSpeechRecognition = (): SpeechRecognitionState => {
       setIsRecording(true);
     } catch (error) {
       console.error('Error starting speech recognition:', error);
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "Failed to start speech recognition. Please try again.",
-        variant: "destructive",
-        duration: 5000,
       });
       setIsRecording(false);
     }
