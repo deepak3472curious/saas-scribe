@@ -17,23 +17,25 @@ const NotesTable = ({ notes }: NotesTableProps) => {
   const navigate = useNavigate();
 
   return (
-    <div className="bg-white shadow rounded-lg overflow-hidden">
+    <div className="bg-white dark:bg-gray-900 shadow-lg rounded-lg overflow-hidden border border-gray-100 dark:border-gray-800">
       <Table>
         <TableHeader>
-          <TableRow>
-            <TableHead>Title</TableHead>
-            <TableHead>Created At</TableHead>
+          <TableRow className="bg-gray-50 dark:bg-gray-800/50">
+            <TableHead className="text-gray-700 dark:text-gray-300">Title</TableHead>
+            <TableHead className="text-gray-700 dark:text-gray-300">Created At</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {notes.map((note) => (
             <TableRow
               key={note.id}
-              className="cursor-pointer hover:bg-gray-50"
+              className="cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
               onClick={() => navigate(`/notes/${note.id}`)}
             >
-              <TableCell className="font-medium">{note.title}</TableCell>
-              <TableCell>
+              <TableCell className="font-medium text-gray-900 dark:text-gray-100">
+                {note.title}
+              </TableCell>
+              <TableCell className="text-gray-600 dark:text-gray-400">
                 {new Date(note.created_at).toLocaleDateString()}
               </TableCell>
             </TableRow>
