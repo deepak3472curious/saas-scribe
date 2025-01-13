@@ -2,7 +2,6 @@ import { useState, useCallback } from "react";
 import { toast } from "sonner";
 import { createSpeechRecognition } from "@/utils/speechUtils";
 import { SpeechRecognitionState } from "@/types/speech";
-import SpeechRecognitionToastActions from "@/components/notes/SpeechRecognitionToastActions";
 
 export const useSpeechRecognition = (): SpeechRecognitionState => {
   const [isRecording, setIsRecording] = useState(false);
@@ -10,23 +9,29 @@ export const useSpeechRecognition = (): SpeechRecognitionState => {
   const [recognition, setRecognition] = useState<SpeechRecognition | null>(null);
 
   const startRecording = useCallback((onTextCaptured: (text: string) => void) => {
+    console.log('🎤 Starting speech recognition...');
     const newRecognition = createSpeechRecognition();
-    if (!newRecognition) return;
+    if (!newRecognition) {
+      console.error('❌ Speech recognition not supported');
+      return;
+    }
 
     setRecognition(newRecognition);
     let silenceTimeout: NodeJS.Timeout;
     let hasSpoken = false;
 
     newRecognition.onstart = () => {
-      console.log('Speech recognition started');
+      console.log('🎙️ Speech recognition started');
       silenceTimeout = setTimeout(() => {
+        console.log('⏲️ Checking silence timeout:', { hasSpoken, isRecording });
         if (!hasSpoken && isRecording) {
-          console.log('No speech detected, showing toast');
+          console.log('🔇 No speech detected, attempting to show toast...');
           toast("No Speech Detected", {
             description: "Please check your microphone and try speaking again.",
             action: {
               label: "Try Again",
               onClick: () => {
+                console.log('🔄 Try Again clicked');
                 if (newRecognition) {
                   newRecognition.stop();
                   setIsRecording(false);
@@ -35,6 +40,7 @@ export const useSpeechRecognition = (): SpeechRecognitionState => {
               },
             },
           });
+          console.log('🛑 Stopping recognition due to silence');
           newRecognition.stop();
           setIsRecording(false);
         }
@@ -42,15 +48,17 @@ export const useSpeechRecognition = (): SpeechRecognitionState => {
     };
 
     newRecognition.onresult = (event) => {
+      console.log('🗣️ Speech detected!');
       hasSpoken = true;
       const transcript = Array.from(event.results)
         .map(result => result[0].transcript)
         .join(" ");
+      console.log('📝 Transcript:', transcript);
       setCapturedText(transcript);
     };
 
     newRecognition.onend = () => {
-      console.log('Speech recognition ended');
+      console.log('🏁 Speech recognition ended', { hasSpoken, capturedText });
       clearTimeout(silenceTimeout);
       if (hasSpoken) {
         onTextCaptured(capturedText);
@@ -59,9 +67,9 @@ export const useSpeechRecognition = (): SpeechRecognitionState => {
     };
 
     newRecognition.onerror = (event) => {
-      console.error('Speech recognition error:', event.error);
+      console.error('🚨 Speech recognition error:', event.error);
       if (event.error !== 'no-speech') {
-        console.log('Showing error toast');
+        console.log('⚠️ Showing error toast');
         toast.error("Error", {
           description: "There was an error with speech recognition. Please try again.",
         });
@@ -71,10 +79,11 @@ export const useSpeechRecognition = (): SpeechRecognitionState => {
     };
 
     try {
+      console.log('▶️ Attempting to start recognition');
       newRecognition.start();
       setIsRecording(true);
     } catch (error) {
-      console.error('Error starting speech recognition:', error);
+      console.error('💥 Error starting speech recognition:', error);
       toast.error("Error", {
         description: "Failed to start speech recognition. Please try again.",
       });
@@ -83,6 +92,7 @@ export const useSpeechRecognition = (): SpeechRecognitionState => {
   }, [capturedText, isRecording]);
 
   const stopRecording = useCallback(() => {
+    console.log('⏹️ Manual stop recording requested');
     if (recognition) {
       recognition.stop();
     }
